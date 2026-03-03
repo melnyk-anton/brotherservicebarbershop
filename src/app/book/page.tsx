@@ -25,7 +25,15 @@ export default async function BookingPage() {
     ]);
 
     const services = servicesRes.data ?? [];
-    const barbers = barbersRes.data ?? [];
+
+    // Deduplicate barbers by name+title in case DB has duplicate entries
+    const seen = new Set<string>();
+    const barbers = (barbersRes.data ?? []).filter((b) => {
+        const key = `${b.name}__${b.title}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
 
     return (
         <>

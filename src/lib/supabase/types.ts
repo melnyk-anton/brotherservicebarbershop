@@ -11,6 +11,7 @@ export interface Barber {
     title: string;
     bio: string;
     image_url: string;
+    portfolio_urls?: string[];
     active: boolean;
     sort_order: number;
     created_at: string;
