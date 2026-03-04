@@ -1,12 +1,11 @@
-import type { Barber, Service } from "@/lib/supabase/types";
+import type { Barber, BarberService } from "@/lib/supabase/types";
 
 export interface BookingState {
     step: number;
-    service: Service | null;
     barber: Barber | null;
-    anyBarber: boolean;
+    service: BarberService | null;
     date: Date | null;
-    timeSlot: string | null; // ISO string in UTC
+    timeSlot: string | null;
     customerName: string;
     customerPhone: string;
 }
@@ -23,8 +22,8 @@ export interface TimeSlot {
 }
 
 export type BookingAction =
-    | { type: "SET_SERVICE"; payload: Service }
-    | { type: "SET_BARBER"; payload: Barber | null; anyBarber: boolean }
+    | { type: "SET_BARBER"; payload: Barber }
+    | { type: "SET_SERVICE"; payload: BarberService }
     | { type: "SET_DATE"; payload: Date }
     | { type: "SET_TIME_SLOT"; payload: string }
     | { type: "SET_CUSTOMER_NAME"; payload: string }
@@ -34,9 +33,8 @@ export type BookingAction =
 
 export const initialBookingState: BookingState = {
     step: 1,
-    service: null,
     barber: null,
-    anyBarber: false,
+    service: null,
     date: null,
     timeSlot: null,
     customerName: "",
@@ -48,21 +46,21 @@ export function bookingReducer(
     action: BookingAction
 ): BookingState {
     switch (action.type) {
-        case "SET_SERVICE":
-            return {
-                ...state,
-                service: action.payload,
-                // Reset downstream selections when service changes
-                date: null,
-                timeSlot: null,
-                step: 2,
-            };
         case "SET_BARBER":
             return {
                 ...state,
                 barber: action.payload,
-                anyBarber: action.anyBarber,
-                // Reset downstream selections
+                // Reset downstream selections when barber changes
+                service: null,
+                date: null,
+                timeSlot: null,
+                step: 2,
+            };
+        case "SET_SERVICE":
+            return {
+                ...state,
+                service: action.payload,
+                // Reset downstream
                 date: null,
                 timeSlot: null,
                 step: 3,

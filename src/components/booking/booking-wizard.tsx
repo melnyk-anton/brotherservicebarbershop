@@ -4,27 +4,23 @@ import { useReducer } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StepIndicator } from "./step-indicator";
-import { ServiceStep } from "./service-step";
 import { BarberStep } from "./barber-step";
+import { ServiceStep } from "./service-step";
 import { DateTimeStep } from "./datetime-step";
 import { DetailsStep } from "./details-step";
 import { ConfirmationStep } from "./confirmation-step";
-import {
-    bookingReducer,
-    initialBookingState,
-} from "@/lib/booking/types";
-import type { Barber, Service } from "@/lib/supabase/types";
+import { bookingReducer, initialBookingState } from "@/lib/booking/types";
+import type { Barber } from "@/lib/supabase/types";
 
 interface BookingWizardProps {
-    services: Service[];
     barbers: Barber[];
 }
 
-export function BookingWizard({ services, barbers }: BookingWizardProps) {
+export function BookingWizard({ barbers }: BookingWizardProps) {
     const [state, dispatch] = useReducer(bookingReducer, initialBookingState);
 
     const handleConfirm = async () => {
-        if (!state.service || !state.timeSlot) {
+        if (!state.service || !state.timeSlot || !state.barber) {
             throw new Error("Дані бронювання неповні");
         }
 
@@ -32,9 +28,8 @@ export function BookingWizard({ services, barbers }: BookingWizardProps) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                service_id: state.service.id,
-                barber_id: state.anyBarber ? null : state.barber?.id,
-                any_barber: state.anyBarber,
+                barber_service_id: state.service.id,
+                barber_id: state.barber.id,
                 start_time: state.timeSlot,
                 customer_name: state.customerName.trim(),
                 customer_phone: state.customerPhone.replace(/\s/g, ""),
@@ -42,20 +37,15 @@ export function BookingWizard({ services, barbers }: BookingWizardProps) {
         });
 
         const data = await res.json();
-
-        if (!res.ok) {
-            throw new Error(data.error || "Помилка бронювання");
-        }
+        if (!res.ok) throw new Error(data.error || "Помилка бронювання");
     };
 
     const canGoBack = state.step > 1 && state.step <= 5;
 
     return (
         <div className="space-y-8">
-            {/* Step Indicator */}
             <StepIndicator currentStep={state.step} />
 
-            {/* Back Button */}
             {canGoBack && (
                 <Button
                     variant="ghost"
@@ -68,10 +58,21 @@ export function BookingWizard({ services, barbers }: BookingWizardProps) {
                 </Button>
             )}
 
-            {/* Steps */}
+            {/* Step 1 — Barber */}
             {state.step === 1 && (
+                <BarberStep
+                    barbers={barbers}
+                    selected={state.barber}
+                    onSelect={(barber) =>
+                        dispatch({ type: "SET_BARBER", payload: barber })
+                    }
+                />
+            )}
+
+            {/* Step 2 — Service (per-barber prices) */}
+            {state.step === 2 && state.barber && (
                 <ServiceStep
-                    services={services}
+                    barberId={state.barber.id}
                     selected={state.service}
                     onSelect={(service) =>
                         dispatch({ type: "SET_SERVICE", payload: service })
@@ -79,21 +80,11 @@ export function BookingWizard({ services, barbers }: BookingWizardProps) {
                 />
             )}
 
-            {state.step === 2 && (
-                <BarberStep
-                    barbers={barbers}
-                    selected={state.barber}
-                    anyBarber={state.anyBarber}
-                    onSelect={(barber, anyBarber) =>
-                        dispatch({ type: "SET_BARBER", payload: barber, anyBarber })
-                    }
-                />
-            )}
-
+            {/* Step 3 — Date & Time */}
             {state.step === 3 && (
                 <DateTimeStep
                     barberId={state.barber?.id ?? null}
-                    anyBarber={state.anyBarber}
+                    anyBarber={false}
                     durationMinutes={state.service?.duration_minutes ?? 30}
                     selectedSlot={state.timeSlot}
                     onSelectSlot={(slot) =>
@@ -102,6 +93,7 @@ export function BookingWizard({ services, barbers }: BookingWizardProps) {
                 />
             )}
 
+            {/* Step 4 — Details */}
             {state.step === 4 && (
                 <DetailsStep
                     customerName={state.customerName}
@@ -116,6 +108,7 @@ export function BookingWizard({ services, barbers }: BookingWizardProps) {
                 />
             )}
 
+            {/* Step 5 — Confirmation */}
             {state.step === 5 && (
                 <ConfirmationStep
                     state={state}

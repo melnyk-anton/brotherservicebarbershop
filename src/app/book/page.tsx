@@ -11,24 +11,15 @@ export const metadata = {
 export default async function BookingPage() {
     const supabase = await createClient();
 
-    const [servicesRes, barbersRes] = await Promise.all([
-        supabase
-            .from("services")
-            .select("*")
-            .eq("active", true)
-            .order("sort_order"),
-        supabase
-            .from("barbers")
-            .select("*")
-            .eq("active", true)
-            .order("sort_order"),
-    ]);
+    const { data: barbersRaw } = await supabase
+        .from("barbers")
+        .select("*")
+        .eq("active", true)
+        .order("sort_order");
 
-    const services = servicesRes.data ?? [];
-
-    // Deduplicate barbers by name+title in case DB has duplicate entries
+    // Deduplicate by name+title
     const seen = new Set<string>();
-    const barbers = (barbersRes.data ?? []).filter((b) => {
+    const barbers = (barbersRaw ?? []).filter((b) => {
         const key = `${b.name}__${b.title}`;
         if (seen.has(key)) return false;
         seen.add(key);
@@ -40,7 +31,7 @@ export default async function BookingPage() {
             <Navbar />
             <main className="min-h-screen pt-24 pb-16">
                 <div className="mx-auto max-w-3xl px-6">
-                    <BookingWizard services={services} barbers={barbers} />
+                    <BookingWizard barbers={barbers} />
                 </div>
             </main>
             <Footer />

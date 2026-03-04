@@ -87,11 +87,7 @@ export function ConfirmationStep({
                         <User className="h-4 w-4 text-[hsl(var(--primary))]" />
                         <div>
                             <p className="text-xs text-[hsl(var(--muted-foreground))]">Майстер</p>
-                            <p className="font-medium">
-                                {state.anyBarber
-                                    ? "Будь-який майстер"
-                                    : state.barber?.name}
-                            </p>
+                            <p className="font-medium">{state.barber?.name}</p>
                         </div>
                     </div>
 

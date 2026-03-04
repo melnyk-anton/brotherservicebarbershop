@@ -28,6 +28,18 @@ export interface Service {
     created_at: string;
 }
 
+export interface BarberService {
+    id: string;
+    barber_id: string;
+    name: string;
+    category: string;
+    duration_minutes: number;
+    price_uah: number;
+    active: boolean;
+    sort_order: number;
+    created_at: string;
+}
+
 export interface Booking {
     id: string;
     customer_name: string;

@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateName, validatePhone } from "@/lib/booking/validation";
 import { sendBookingNotification } from "@/lib/telegram";
-import { formatTimeKyiv, formatDateKyiv, findAvailableBarbersForSlot } from "@/lib/booking/slots";
+import { formatTimeKyiv, formatDateKyiv } from "@/lib/booking/slots";
 import { addMinutes, format } from "date-fns";
 
 interface BookingRequestBody {
-    service_id: string;
-    barber_id: string | null;
-    any_barber: boolean;
+    barber_service_id: string;
+    barber_id: string;
     start_time: string;
     customer_name: string;
     customer_phone: string;
@@ -18,8 +17,7 @@ export async function POST(request: NextRequest) {
     try {
         const body: BookingRequestBody = await request.json();
 
-        // ---- Validation ----
-        if (!body.service_id || !body.start_time || !body.customer_name || !body.customer_phone) {
+        if (!body.barber_service_id || !body.barber_id || !body.start_time || !body.customer_name || !body.customer_phone) {
             return NextResponse.json(
                 { error: "Заповніть усі обов'язкові поля" },
                 { status: 400 }
@@ -42,11 +40,11 @@ export async function POST(request: NextRequest) {
 
         const supabase = createAdminClient();
 
-        // ---- Get service to know duration ----
+        // ---- Get barber_service to know duration & name ----
         const { data: service, error: serviceError } = await supabase
-            .from("services")
+            .from("barber_services")
             .select("*")
-            .eq("id", body.service_id)
+            .eq("id", body.barber_service_id)
             .single();
 
         if (serviceError || !service) {
@@ -61,51 +59,14 @@ export async function POST(request: NextRequest) {
         const endTime = addMinutes(startTime, service.duration_minutes);
         const dateStr = format(startTime, "yyyy-MM-dd");
 
-        // ---- Resolve barber ----
-        let barberId = body.barber_id;
-
-        if (body.any_barber || !barberId) {
-            // Find an available barber
-            const { data: activeBarbers } = await supabase
-                .from("barbers")
-                .select("id")
-                .eq("active", true);
-
-            const barberIds = (activeBarbers ?? []).map((b) => b.id);
-
-            // Fetch existing bookings for the date
-            const { data: existingBookings } = await supabase
-                .from("bookings")
-                .select("start_time, end_time, barber_id")
-                .eq("date", dateStr)
-                .neq("status", "cancelled");
-
-            const availableBarbers = findAvailableBarbersForSlot(
-                body.start_time,
-                endTime.toISOString(),
-                existingBookings ?? [],
-                barberIds
-            );
-
-            if (availableBarbers.length === 0) {
-                return NextResponse.json(
-                    { error: "На цей час немає вільних майстрів" },
-                    { status: 409 }
-                );
-            }
-
-            // Auto-assign the first available barber
-            barberId = availableBarbers[0];
-        }
-
         // ---- Insert booking ----
         const { data: booking, error: bookingError } = await supabase
             .from("bookings")
             .insert({
                 customer_name: body.customer_name.trim(),
                 customer_phone: body.customer_phone.replace(/\s/g, ""),
-                barber_id: barberId,
-                service_id: body.service_id,
+                barber_id: body.barber_id,
+                service_id: body.barber_service_id,
                 date: dateStr,
                 start_time: body.start_time,
                 end_time: endTime.toISOString(),
@@ -115,7 +76,6 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (bookingError) {
-            // Check for exclusion constraint violation (double booking)
             if (
                 bookingError.code === "23P01" ||
                 bookingError.message?.includes("no_overlapping_bookings")
@@ -125,7 +85,6 @@ export async function POST(request: NextRequest) {
                     { status: 409 }
                 );
             }
-
             console.error("Booking insert error:", bookingError);
             return NextResponse.json(
                 { error: "Помилка створення запису. Спробуйте ще раз." },
@@ -137,10 +96,9 @@ export async function POST(request: NextRequest) {
         const { data: barber } = await supabase
             .from("barbers")
             .select("name")
-            .eq("id", barberId)
+            .eq("id", body.barber_id)
             .single();
 
-        // ---- Fire-and-forget Telegram notification ----
         sendBookingNotification({
             customerName: body.customer_name.trim(),
             customerPhone: body.customer_phone,
