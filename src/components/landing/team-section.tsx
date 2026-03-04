@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Scissors } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { Barber } from "@/lib/supabase/types";
+import { PortfolioSlider } from "./portfolio-slider";
 
 async function getBarbers(): Promise<Barber[]> {
     const supabase = await createClient();
@@ -123,27 +124,12 @@ export async function TeamSection() {
                                             </p>
                                         )}
 
-                                        {/* Portfolio — 3 work photos */}
+                                        {/* Portfolio slider — 3 work photos */}
                                         {barber.portfolio_urls && barber.portfolio_urls.length > 0 && (
-                                            <div className="mb-10">
-                                                <p className="text-xs font-medium tracking-[0.2em] uppercase text-zinc-500 mb-4">
-                                                    Роботи
-                                                </p>
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    {barber.portfolio_urls.slice(0, 3).map((url, i) => (
-                                                        <div
-                                                            key={i}
-                                                            className="aspect-square overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900"
-                                                        >
-                                                            <img
-                                                                src={url}
-                                                                alt={`${barber.name} — робота ${i + 1}`}
-                                                                className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
-                                                            />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
+                                            <PortfolioSlider
+                                                images={barber.portfolio_urls}
+                                                name={barber.name}
+                                            />
                                         )}
 
                                         <Link
