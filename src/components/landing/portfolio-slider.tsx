@@ -23,7 +23,7 @@ export function PortfolioSlider({ images, name }: PortfolioSliderProps) {
             </p>
 
             {/* Slider */}
-            <div className="relative group/slider overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 aspect-[3/4]">
+            <div className="relative group/slider overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 aspect-square">
                 {/* Images */}
                 <div
                     className="flex h-full transition-transform duration-500 ease-in-out"
