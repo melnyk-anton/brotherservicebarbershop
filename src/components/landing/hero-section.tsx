@@ -47,7 +47,7 @@ export function HeroSection() {
 
                 {/* Bottom: Info strip */}
                 <div className="mt-auto grid grid-cols-1 sm:grid-cols-3 gap-8 border-t border-zinc-800/60 pt-10">
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-4 justify-start">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50">
                             <MapPin className="h-5 w-5 text-[hsl(187,71%,50%)]" />
                         </div>
@@ -56,7 +56,7 @@ export function HeroSection() {
                             <p className="mt-1 text-base font-medium text-white">м. Рівне, Степана Бандери, 60А</p>
                         </div>
                     </div>
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-4 sm:justify-center">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50">
                             <Clock className="h-5 w-5 text-[hsl(187,71%,50%)]" />
                         </div>
@@ -65,7 +65,7 @@ export function HeroSection() {
                             <p className="mt-1 text-base font-medium text-white">Пн–Сб 9:00–21:00</p>
                         </div>
                     </div>
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-4 sm:justify-end">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50">
                             <Star className="h-5 w-5 text-[hsl(187,71%,50%)]" />
                         </div>
