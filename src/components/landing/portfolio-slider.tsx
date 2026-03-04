@@ -23,7 +23,7 @@ export function PortfolioSlider({ images, name }: PortfolioSliderProps) {
             </p>
 
             {/* Slider */}
-            <div className="relative group/slider overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 aspect-[4/3]">
+            <div className="relative group/slider overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 aspect-[3/4]">
                 {/* Images */}
                 <div
                     className="flex h-full transition-transform duration-500 ease-in-out"
@@ -34,7 +34,7 @@ export function PortfolioSlider({ images, name }: PortfolioSliderProps) {
                             <img
                                 src={url}
                                 alt={`${name} — робота ${i + 1}`}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover object-top"
                             />
                         </div>
                     ))}
@@ -65,8 +65,8 @@ export function PortfolioSlider({ images, name }: PortfolioSliderProps) {
                             key={i}
                             onClick={() => setCurrent(i)}
                             className={`h-1.5 rounded-full transition-all duration-300 ${i === current
-                                    ? "w-5 bg-[hsl(187,71%,50%)]"
-                                    : "w-1.5 bg-zinc-600 hover:bg-zinc-400"
+                                ? "w-5 bg-[hsl(187,71%,50%)]"
+                                : "w-1.5 bg-zinc-600 hover:bg-zinc-400"
                                 }`}
                             aria-label={`Фото ${i + 1}`}
                         />
