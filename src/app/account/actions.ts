@@ -14,15 +14,26 @@ export async function registerAction(formData: FormData) {
 
     const { data, error } = await supabase.auth.signUp({ email, password });
 
-    if (error) return { error: error.message };
-    if (!data.user) return { error: "Помилка реєстрації" };
+    if (error) {
+        if (error.message.includes("rate limit")) {
+            return { error: "Занадто багато спроб. Зачекайте кілька хвилин." };
+        }
+        return { error: error.message };
+    }
 
-    // Create profile
+    if (!data.user) return { error: "Помилка реєстрації. Спробуйте ще раз." };
+
+    // Save profile
     await supabase.from("profiles").upsert({
         id: data.user.id,
         full_name: fullName,
         phone,
     });
+
+    // If email confirmation is required — show message instead of redirect
+    if (!data.session) {
+        return { success: "Перевірте пошту та підтвердіть email, потім увійдіть." };
+    }
 
     revalidatePath("/account/me");
     redirect("/account/me");

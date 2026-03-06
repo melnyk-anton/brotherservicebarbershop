@@ -14,17 +14,20 @@ interface AuthFormProps {
 
 export function AuthForm({ mode }: AuthFormProps) {
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
     const [showPass, setShowPass] = useState(false);
     const [isPending, startTransition] = useTransition();
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError("");
+        setSuccess("");
         const formData = new FormData(e.currentTarget);
         startTransition(async () => {
             const action = mode === "login" ? loginAction : registerAction;
             const result = await action(formData);
             if (result?.error) setError(result.error);
+            if (result && "success" in result && result.success) setSuccess(result.success as string);
         });
     };
 
@@ -98,6 +101,12 @@ export function AuthForm({ mode }: AuthFormProps) {
                         <div className="flex items-center gap-2 rounded-lg border border-red-800 bg-red-950/40 p-3 text-sm text-red-400">
                             <AlertCircle className="h-4 w-4 shrink-0" />
                             <span>{error}</span>
+                        </div>
+                    )}
+
+                    {success && (
+                        <div className="flex items-center gap-2 rounded-lg border border-green-800 bg-green-950/40 p-3 text-sm text-green-400">
+                            <span>✉️ {success}</span>
                         </div>
                     )}
 
