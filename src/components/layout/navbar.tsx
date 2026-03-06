@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navLinks = [
     { href: "/#services", label: "Послуги" },
@@ -15,13 +17,21 @@ const navLinks = [
 export function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [user, setUser] = useState<SupabaseUser | null>(null);
 
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
-        };
+        const handleScroll = () => setIsScrolled(window.scrollY > 20);
         window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data }) => setUser(data.user));
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+            setUser(session?.user ?? null);
+        });
+        return () => subscription.unsubscribe();
     }, []);
 
     return (
@@ -34,10 +44,9 @@ export function Navbar() {
             )}
         >
             <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-                {/* Logo — text mark matching brand identity */}
                 <Link href="/" className="flex items-center gap-0">
                     <span className="text-lg font-bold tracking-tight uppercase">
-                        Brother<span className="text-[hsl(var(--primary))]"> Service</span>
+                        Brother<span className="text-[hsl(var(--primary))]">Service</span>
                     </span>
                 </Link>
 
@@ -55,6 +64,22 @@ export function Navbar() {
                     <Button asChild size="sm">
                         <Link href="/book">Записатися</Link>
                     </Button>
+                    {user ? (
+                        <Link
+                            href="/account/me"
+                            className="flex items-center gap-1.5 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors"
+                        >
+                            <User className="h-4 w-4" />
+                            Кабінет
+                        </Link>
+                    ) : (
+                        <Link
+                            href="/account/login"
+                            className="text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+                        >
+                            Увійти
+                        </Link>
+                    )}
                 </div>
 
                 {/* Mobile Toggle */}
@@ -86,6 +111,24 @@ export function Navbar() {
                                 Записатися
                             </Link>
                         </Button>
+                        {user ? (
+                            <Link
+                                href="/account/me"
+                                onClick={() => setIsMobileOpen(false)}
+                                className="flex items-center gap-1.5 text-sm font-medium text-[hsl(var(--primary))]"
+                            >
+                                <User className="h-4 w-4" />
+                                Мій кабінет
+                            </Link>
+                        ) : (
+                            <Link
+                                href="/account/login"
+                                onClick={() => setIsMobileOpen(false)}
+                                className="text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+                            >
+                                Увійти
+                            </Link>
+                        )}
                     </div>
                 </div>
             )}

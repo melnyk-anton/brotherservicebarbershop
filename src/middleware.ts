@@ -40,7 +40,6 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(url);
         }
 
-        // Verify user is in admin_users table
         const { data: adminUser } = await supabase
             .from("admin_users")
             .select("id")
@@ -54,9 +53,18 @@ export async function middleware(request: NextRequest) {
         }
     }
 
+    // Protect user account page
+    if (request.nextUrl.pathname.startsWith("/account/me")) {
+        if (!user) {
+            const url = request.nextUrl.clone();
+            url.pathname = "/account/login";
+            return NextResponse.redirect(url);
+        }
+    }
+
     return supabaseResponse;
 }
 
 export const config = {
-    matcher: ["/admin/:path*"],
+    matcher: ["/admin/:path*", "/account/me/:path*"],
 };

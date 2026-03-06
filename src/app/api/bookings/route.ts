@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { validateName, validatePhone } from "@/lib/booking/validation";
 import { sendBookingNotification } from "@/lib/telegram";
 import { formatTimeKyiv, formatDateKyiv } from "@/lib/booking/slots";
@@ -59,6 +60,10 @@ export async function POST(request: NextRequest) {
         const endTime = addMinutes(startTime, service.duration_minutes);
         const dateStr = format(startTime, "yyyy-MM-dd");
 
+        // ---- Get current user (optional, for booking history) ----
+        const userClient = await createClient();
+        const { data: { user } } = await userClient.auth.getUser();
+
         // ---- Insert booking ----
         const { data: booking, error: bookingError } = await supabase
             .from("bookings")
@@ -68,6 +73,7 @@ export async function POST(request: NextRequest) {
                 barber_id: body.barber_id,
                 barber_service_id: body.barber_service_id,
                 service_id: null,
+                user_id: user?.id ?? null,
                 date: dateStr,
                 start_time: body.start_time,
                 end_time: endTime.toISOString(),
